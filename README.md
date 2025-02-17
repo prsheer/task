@@ -115,7 +115,95 @@
 - Process
     - `vendor/bin/rector process`
 
-# Alternatives
-- [Laravel Sail](https://laravel.com/docs/master/sail)
-- [Laravel Herd](https://herd.laravel.com/)
-- [Laradock](https://laradock.io/)
+# Product Import Application
+
+## Overview
+This Laravel application processes CSV files containing product information and imports them into a MySQL database while applying specific business rules. The application features a command-line interface and supports both normal and test operation modes.
+
+## Requirements
+- PHP 8.1 or higher
+- Laravel 10.x
+- MySQL 5.7 or higher
+- Composer
+
+2. Install dependencies:
+```bash
+composer install
+```
+
+3. Set up environment:
+```bash
+cp .env.example .env
+# Edit .env with your database credentials
+```
+
+4. Run migrations:
+```bash
+php artisan migrate
+```
+
+## Database Structure
+The application uses the following table structure:
+```sql
+CREATE TABLE tblProductData (
+  intProductDataId int(10) unsigned NOT NULL AUTO_INCREMENT,
+  strProductName varchar(50) NOT NULL,
+  strProductDesc varchar(255) NOT NULL,
+  strProductCode varchar(10) NOT NULL,
+  price decimal(10,2) NOT NULL,
+  stock int NOT NULL,
+  dtmAdded datetime DEFAULT NULL,
+  dtmDiscontinued datetime DEFAULT NULL,
+  stmTimestamp timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+  PRIMARY KEY (intProductDataId),
+  UNIQUE KEY (strProductCode)
+)
+```
+
+## CSV File Format
+Your CSV file should include the following headers:
+```csv
+name,description,code,price,stock,discontinued
+```
+
+Example:
+```csv
+name,description,code,price,stock,discontinued
+Test Product,This is a test product,TEST001,15.99,100,0
+Another Product,Another description,TEST002,25.50,50,1
+```
+
+## Usage
+
+### Normal Mode
+To run the import:
+```bash
+php artisan products:import /path/to/your/products.csv
+```
+
+### Test Mode
+To run in test mode (no database insertion):
+```bash
+php artisan products:import /path/to/your/products.csv --test
+```
+
+## Business Rules
+The importer applies the following rules:
+1. Products with price < $5 AND stock < 10 will not be imported
+2. Products with price > $1000 will not be imported
+3. Discontinued products will be imported with the current date as discontinued date
+
+## Output
+The command provides a summary showing:
+- Total items processed
+- Successfully imported items
+- Skipped items
+- Any failures that occurred during import
+
+## Error Handling
+The application handles:
+- Invalid CSV formatting
+- Missing required fields
+- Data encoding issues
+- Database constraints
+- Business rule violations
